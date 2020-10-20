@@ -63,6 +63,16 @@ declare class TwoCaptchaClient {
         pageurl: string;
     }): Promise<import("./captcha")>;
     /**
+     * Sends an image captcha and polls for its response
+     *
+     * @param  {Object} options          Parameters for the requests
+     * @param  {string} [options.textcaptcha] An already base64-coded image
+     * @return {Promise<Captcha>}        Promise for a Captcha object
+     */
+    decodeText(options?: {
+        textcaptcha: string;
+    }): Promise<import("./captcha")>;
+    /**
      * @deprecated /load.php route is returning error 500
      * Get current load from 2Captcha service
      *

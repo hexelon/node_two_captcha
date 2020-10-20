@@ -135,6 +135,33 @@ class TwoCaptchaClient {
   }
 
   /**
+   * Sends an image captcha and polls for its response
+   *
+   * @param  {Object} options          Parameters for the requests
+   * @param  {string} [options.textcaptcha] An already base64-coded image
+   * @return {Promise<Captcha>}        Promise for a Captcha object
+   */
+  async decodeText(options = {}) {
+    const startedAt = Date.now();
+
+    if (typeof (this.key) !== 'string') this._throwError('2Captcha key must be a string')
+
+    let decodedCaptcha = await this._upload({ ...options });
+
+    // Keep pooling untill the answer is ready
+    while (!decodedCaptcha.text) {
+      await this._sleep(this.polling);
+      if (Date.now() - startedAt > this.timeout) {
+        this._throwError('Captcha timeout');
+        return;
+      }
+      decodedCaptcha = await this.captcha(decodedCaptcha.id);
+    }
+
+    return decodedCaptcha;
+  }
+
+  /**
    * @deprecated /load.php route is returning error 500
    * Get current load from 2Captcha service
    *
