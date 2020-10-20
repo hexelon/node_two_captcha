@@ -40,9 +40,7 @@ class HTTPRequest {
     const method = options.method || 'get';
     const payload = options.payload || {};
     const timeout = options.timeout || 60000;
-    let headers = {
-      'User-Agent': constants.userAgent
-    };
+    let headers = {};
 
     let res = await (async function() {
       switch (method) {
