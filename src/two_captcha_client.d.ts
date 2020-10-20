@@ -44,11 +44,11 @@ declare class TwoCaptchaClient {
      * @return {Promise<Captcha>}        Promise for a Captcha object
      */
     decode(options?: {
-        base64: string;
-        buffer: any;
-        path: string;
-        url: string;
-        method: string;
+        base64?: string;
+        buffer?: any;
+        path?: string;
+        url?: string;
+        method?: string;
     }): Promise<import("./captcha")>;
     /**
      * Sends a ReCaptcha v2 and polls for its response
