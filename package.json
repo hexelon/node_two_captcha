@@ -2,10 +2,12 @@
   "name": "@infosimples/node_two_captcha",
   "version": "1.0.2",
   "description": "Node.js package for easy integration with 2Captcha API (Captcha Solver as a Service)",
-  "main": "index.js",
+  "main": "two_captcha_client.js",
+  "types": "two_captcha_client.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "generate_docs": "npx jsdoc -c ./jsdoc-config.json"
+    "generate_docs": "npx jsdoc -c ./jsdoc-config.json",
+    "generate_types": "tsc src/*.js --declaration --allowJs --emitDeclarationOnly --outDir src"
   },
   "repository": {
     "type": "git",
@@ -20,7 +22,8 @@
   "author": "Adriano Dennanni",
   "license": "MIT",
   "dependencies": {
-    "axios": "^0.20.0"
+    "axios": "^0.20.0",
+    "typescript": "^4.0.3"
   },
   "devDependencies": {
     "jsdoc": "^3.5.5"

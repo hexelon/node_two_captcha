@@ -1,0 +1,34 @@
+declare const _exports: {
+    readonly userAgent: string;
+    readonly errors: {
+        CAPCHA_NOT_READY: string;
+        ERROR_BAD_DUPLICATES: string;
+        ERROR_BAD_TOKEN_OR_PAGEURL: string;
+        ERROR_CAPTCHA_UNSOLVABLE: string;
+        ERROR_CAPTCHAIMAGE_BLOCKED: string;
+        ERROR_GOOGLEKEY: string;
+        ERROR_IMAGE_TYPE_NOT_SUPPORTED: string;
+        ERROR_IP_ADDRES: string;
+        ERROR_IP_NOT_ALLOWED: string;
+        ERROR_KEY_DOES_NOT_EXIST: string;
+        ERROR_NO_SLOT_AVAILABLE: string;
+        ERROR_PAGEURL: string;
+        ERROR_TOO_BIG_CAPTCHA_FILESIZE: string;
+        ERROR_UPLOAD: string;
+        ERROR_WRONG_CAPTCHA_ID: string;
+        ERROR_WRONG_FILE_EXTENSION: string;
+        ERROR_WRONG_ID_FORMAT: string;
+        ERROR_WRONG_USER_KEY: string;
+        ERROR_ZERO_BALANCE: string;
+        ERROR_ZERO_CAPTCHA_FILESIZE: string;
+        'ERROR: 1001': string;
+        'ERROR: 1002': string;
+        'ERROR: 1003': string;
+        'ERROR: 1004': string;
+        'ERROR: 1005': string;
+        IP_BANNED: string;
+        MAX_USER_TURN: string;
+        REPORT_NOT_RECORDED: string;
+    };
+};
+export = _exports;
