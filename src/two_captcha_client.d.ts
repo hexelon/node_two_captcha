@@ -63,6 +63,22 @@ declare class TwoCaptchaClient {
         pageurl: string;
     }): Promise<import("./captcha")>;
     /**
+     * Sends a Geetest challenge and polls for its response
+     *
+     * @param  {Object} options              Parameters for the request
+     * @param  {string} options.gt           Static gt key
+     * @param  {string} options.pageurl      Page URL of target page
+     * @param  {string} options.challenge    Dynamic challenge value scraped from target page
+     * @param  {string} options.api_server   Full URL of the page where you see GeeTest captcha
+     * @return {Promise<Captcha>}            Promise for a geettest object
+     */
+    decodeGeetest(options?: {
+        gt: string;
+        pageurl: string;
+        challenge: string;
+        api_server: string;
+    }): Promise<import("./captcha")>;
+    /**
      * Sends an image captcha and polls for its response
      *
      * @param  {Object} options          Parameters for the requests

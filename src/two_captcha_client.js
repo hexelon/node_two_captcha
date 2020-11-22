@@ -1,12 +1,12 @@
-'use strict';
-const fs = require('fs');
-const { promisify } = require('util');
+"use strict";
+const fs = require("fs");
+const { promisify } = require("util");
 
-const Captcha = require('./captcha');
-const constants = require('./constants');
-const HTTPRequest = require('./http_request');
+const Captcha = require("./captcha");
+const constants = require("./constants");
+const HTTPRequest = require("./http_request");
 
-const baseUrl = 'https://2captcha.com/<action>.php';
+const baseUrl = "https://2captcha.com/<action>.php";
 const readFileAsync = promisify(fs.readFile);
 
 class TwoCaptchaClient {
@@ -20,17 +20,17 @@ class TwoCaptchaClient {
    * @param  {Boolean} [params.throwErrors] Whether the client should throw errors or just log the errors
    * @return {TwoCaptchaClient}             The client object
    */
-  constructor(key, {
-    timeout = 60000,
-    polling = 5000,
-    throwErrors = false
-  } = {}) {
+  constructor(
+    key,
+    { timeout = 60000, polling = 5000, throwErrors = false } = {}
+  ) {
     this.key = key;
     this.timeout = timeout;
     this.polling = polling;
     this.throwErrors = throwErrors;
 
-    if (typeof (key) !== 'string') this._throwError('2Captcha key must be a string');
+    if (typeof key !== "string")
+      this._throwError("2Captcha key must be a string");
   }
 
   /**
@@ -39,8 +39,8 @@ class TwoCaptchaClient {
    * @return {Promise<float>} Account balance in USD
    */
   async balance() {
-    let res = await this._request('res', 'get', {
-      action: 'getbalance'
+    let res = await this._request("res", "get", {
+      action: "getbalance",
     });
     return res;
   }
@@ -52,19 +52,18 @@ class TwoCaptchaClient {
    * @return {Promis<Captcha>}  A promise for the captcha
    */
   async captcha(captchaId) {
-    const res = await this._request('res', 'get', {
+    const res = await this._request("res", "get", {
       id: captchaId,
-      action: 'get'
+      action: "get",
     });
 
     let decodedCaptcha = new Captcha();
     decodedCaptcha.id = captchaId;
     decodedCaptcha.apiResponse = res;
-    decodedCaptcha.text = res.split('|', 2)[1];
+    decodedCaptcha.text = res.slice(0, 3) === "OK|" ? res.slice(3) : undefined;
 
     return decodedCaptcha;
   }
-
 
   /**
    * Sends an image captcha and polls for its response
@@ -80,7 +79,8 @@ class TwoCaptchaClient {
   async decode(options = {}) {
     const startedAt = Date.now();
 
-    if (typeof (this.key) !== 'string') this._throwError('2Captcha key must be a string')
+    if (typeof this.key !== "string")
+      this._throwError("2Captcha key must be a string");
 
     let base64 = await this._loadCaptcha(options);
 
@@ -90,7 +90,7 @@ class TwoCaptchaClient {
     while (!decodedCaptcha.text) {
       await this._sleep(this.polling);
       if (Date.now() - startedAt > this.timeout) {
-        this._throwError('Captcha timeout');
+        this._throwError("Captcha timeout");
         return;
       }
       decodedCaptcha = await this.captcha(decodedCaptcha.id);
@@ -110,13 +110,14 @@ class TwoCaptchaClient {
   async decodeRecaptchaV2(options = {}) {
     let startedAt = Date.now();
 
-    if (options.googlekey === '') this._throwError('Missing googlekey parameter');
-    if (options.pageurl === '') this._throwError('Missing pageurl parameter');
+    if (options.googlekey === "")
+      this._throwError("Missing googlekey parameter");
+    if (options.pageurl === "") this._throwError("Missing pageurl parameter");
 
     let upload_options = {
-      method: 'userrecaptcha',
+      method: "userrecaptcha",
       googlekey: options.googlekey,
-      pageurl: options.pageurl
+      pageurl: options.pageurl,
     };
 
     let decodedCaptcha = await this._upload(upload_options);
@@ -125,7 +126,48 @@ class TwoCaptchaClient {
     while (!decodedCaptcha.text) {
       await this._sleep(Math.max(this.polling, 10)); // Sleep at least 10 seconds
       if (Date.now() - startedAt > this.timeout) {
-        this._throwError('Captcha timeout');
+        this._throwError("Captcha timeout");
+        return;
+      }
+      decodedCaptcha = await this.captcha(decodedCaptcha.id);
+    }
+
+    return decodedCaptcha;
+  }
+
+  /**
+   * Sends a Geetest challenge and polls for its response
+   *
+   * @param  {Object} options              Parameters for the request
+   * @param  {string} options.gt           Static gt key
+   * @param  {string} options.pageurl      Page URL of target page
+   * @param  {string} options.challenge    Dynamic challenge value scraped from target page
+   * @param  {string} options.api_server   Full URL of the page where you see GeeTest captcha
+   * @return {Promise<Captcha>}            Promise for a geettest object
+   */
+  async decodeGeetest(options = {}) {
+    let startedAt = Date.now();
+
+    if (options.gt === "") this._throwError("Missing gt parameter");
+    if (options.challenge === "")
+      this._throwError("Missing challenge parameter");
+    if (options.pageurl === "") this._throwError("Missing pageurl parameter");
+
+    let upload_options = {
+      method: "geetest",
+      gt: options.gt,
+      pageurl: options.pageurl,
+      challenge: options.challenge,
+      api_server: options.api_server || "",
+    };
+
+    let decodedCaptcha = await this._upload(upload_options);
+
+    // Keep pooling untill the answer is ready
+    while (!decodedCaptcha.text) {
+      await this._sleep(Math.max(this.polling, 3)); // Sleep at least 3 seconds
+      if (Date.now() - startedAt > this.timeout) {
+        this._throwError("Captcha timeout");
         return;
       }
       decodedCaptcha = await this.captcha(decodedCaptcha.id);
@@ -144,7 +186,8 @@ class TwoCaptchaClient {
   async decodeText(options = {}) {
     const startedAt = Date.now();
 
-    if (typeof (this.key) !== 'string') this._throwError('2Captcha key must be a string')
+    if (typeof this.key !== "string")
+      this._throwError("2Captcha key must be a string");
 
     let decodedCaptcha = await this._upload({ ...options });
 
@@ -152,7 +195,7 @@ class TwoCaptchaClient {
     while (!decodedCaptcha.text) {
       await this._sleep(this.polling);
       if (Date.now() - startedAt > this.timeout) {
-        this._throwError('Captcha timeout');
+        this._throwError("Captcha timeout");
         return;
       }
       decodedCaptcha = await this.captcha(decodedCaptcha.id);
@@ -169,7 +212,7 @@ class TwoCaptchaClient {
    * 2Captcha service
    */
   async load() {
-    return await this._request('load', 'get');
+    return await this._request("load", "get");
   }
 
   /**
@@ -186,15 +229,15 @@ class TwoCaptchaClient {
     if (options.base64) {
       return options.base64;
     } else if (options.buffer) {
-      return options.buffer.toString('base64');
+      return options.buffer.toString("base64");
     } else if (options.path) {
       let fileBinary = await readFileAsync(options.path);
-      return new Buffer.from(fileBinary, 'binary').toString('base64');
+      return new Buffer.from(fileBinary, "binary").toString("base64");
     } else if (options.url) {
       let image = await HTTPRequest.openDataURL(options.url);
-      return new Buffer.from(image, 'binary').toString('base64');
+      return new Buffer.from(image, "binary").toString("base64");
     } else {
-      this._throwError('No image data received');
+      this._throwError("No image data received");
     }
   }
 
@@ -206,12 +249,12 @@ class TwoCaptchaClient {
    * @param  {string} payload  Body of the requisition
    * @return {Promise<string>} Promise for the response body
    */
-  async _request(action, method = 'get', payload = {}) {
+  async _request(action, method = "get", payload = {}) {
     let req = await HTTPRequest.request({
-      url: baseUrl.replace('<action>', action),
+      url: baseUrl.replace("<action>", action),
       timeout: this.timeout,
       method: method,
-      payload: { ...payload, key: this.key, soft_id: 2386 }
+      payload: { ...payload, key: this.key },
     });
 
     this._validateResponse(req);
@@ -228,11 +271,11 @@ class TwoCaptchaClient {
    * was received
    */
   async report(captchaId, bad = true) {
-    let res = await this._request('res', 'get', {
-      action: bad ? 'reportbad' : 'reportgood',
-      id: captchaId
+    let res = await this._request("res", "get", {
+      action: bad ? "reportbad" : "reportgood",
+      id: captchaId,
     });
-    return res === 'OK_REPORT_RECORDED';
+    return res === "OK_REPORT_RECORDED";
   }
 
   /**
@@ -242,8 +285,8 @@ class TwoCaptchaClient {
    * @return {Promise<undefined>} Promise for undefined that resolves after ms milliseconds
    */
   async _sleep(ms) {
-    return new Promise(resolve => {
-      setTimeout(resolve, ms)
+    return new Promise((resolve) => {
+      setTimeout(resolve, ms);
     });
   }
 
@@ -255,9 +298,9 @@ class TwoCaptchaClient {
    * target day
    */
   async stats(date) {
-    let res = await this._request('res', 'get', {
-      action: 'getstats',
-      date: date.toISOString().slice(0, 10)
+    let res = await this._request("res", "get", {
+      action: "getstats",
+      date: date.toISOString().slice(0, 10),
     });
     return res;
   }
@@ -270,7 +313,7 @@ class TwoCaptchaClient {
    * @return {(undefined|Boolean)} If an error wasn't thrown, returns false.
    */
   _throwError(message) {
-    if (message === 'Your captcha is not solved yet.') return false;
+    if (message === "Your captcha is not solved yet.") return false;
     if (this.throwErrors) {
       throw new Error(message);
     } else {
@@ -290,7 +333,7 @@ class TwoCaptchaClient {
   async _upload(options = {}) {
     let args = {};
     if (options.base64) args.body = options.base64;
-    args.method = options.method || 'base64';
+    args.method = options.method || "base64";
 
     // Merge args with any other required field
     args = { ...args, ...options };
@@ -301,12 +344,12 @@ class TwoCaptchaClient {
     delete args.path;
     delete args.url;
 
-    let res = await this._request('in', 'post', args);
+    let res = await this._request("in", "post", args);
 
     this._validateResponse(res);
 
     let decodedCaptcha = new Captcha();
-    decodedCaptcha.id = res.split('|', 2)[1];
+    decodedCaptcha.id = res.split("|", 2)[1];
 
     return decodedCaptcha;
   }
@@ -323,7 +366,7 @@ class TwoCaptchaClient {
     let message;
     if (constants.errors[body]) {
       message = constants.errors[body];
-    } else if (body === '' || body.toString().includes('ERROR')) {
+    } else if (body === "" || body.toString().includes("ERROR")) {
       message = `Unknown 2Captcha error: ${body}`;
     } else {
       return true;
@@ -331,7 +374,6 @@ class TwoCaptchaClient {
 
     return this._throwError(message);
   }
-
 }
 
 module.exports = TwoCaptchaClient;
